@@ -1,0 +1,13 @@
+# Node
+node_modules/
+npm-debug.log
+dist/
+
+# Variables de entorno y secretos
+.env
+.env.local
+.env.*.local
+
+# Sistema
+.DS_Store
+*.log

@@ -1,0 +1,661 @@
+<!-- ========================================== -->
+<!-- CÓDIGO CORREGIDO: index.html (Panel Web) -->
+<!-- ========================================== -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yozakura High | Panel de Control de Staff</title>
+
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --bg-dark: #0d0b12;
+            --card-bg: #16121e;
+            --modal-bg: #1a1524;
+            --accent-pink: #ff65a3;
+            --accent-purple: #9d4edf;
+            --border-color: rgba(255, 101, 163, 0.18);
+            --text-main: #f3effa;
+            --text-muted: #a69cb5;
+            --success-color: #2ec4b6;
+            --danger-color: #e71d36;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 101, 163, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(157, 78, 223, 0.05) 0%, transparent 40%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* HEADER */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-title h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.6rem;
+            color: var(--accent-pink);
+            letter-spacing: 1px;
+        }
+
+        .brand-title span {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .staff-badge {
+            background: rgba(255, 101, 163, 0.1);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.88rem;
+            color: var(--accent-pink);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* GRID DE FICHAS */
+        .grid-fichas {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .ficha-mini-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 18px;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ficha-mini-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-pink);
+            box-shadow: 0 10px 25px rgba(255, 101, 163, 0.15);
+        }
+
+        .ficha-mini-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ficha-mini-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-pink);
+        }
+
+        .ficha-mini-info h3 {
+            font-size: 1.05rem;
+            color: var(--text-main);
+        }
+
+        .ficha-mini-info span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .btn {
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-review {
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            color: #fff;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        .btn-review:hover {
+            opacity: 0.9;
+            box-shadow: 0 4px 15px rgba(255, 101, 163, 0.3);
+        }
+
+        .no-fichas {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px dashed var(--border-color);
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* MODAL DE REVISIÓN */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: var(--modal-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 650px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+
+        .modal-header-banner {
+            height: 120px;
+            background: linear-gradient(135deg, rgba(255,101,163,0.3), rgba(157,78,223,0.3));
+            position: relative;
+        }
+
+        .btn-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.5);
+            color: #fff;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 25px;
+            margin-top: -50px;
+        }
+
+        .modal-profile-header {
+            display: flex;
+            align-items: flex-end;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .modal-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--accent-pink);
+            background: var(--bg-dark);
+        }
+
+        .field-group {
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-bottom: 12px;
+        }
+
+        .field-group label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--accent-pink);
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .field-group p {
+            font-size: 0.92rem;
+            color: var(--text-main);
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-accept {
+            background: var(--success-color);
+            color: #000;
+            flex: 1;
+        }
+
+        .btn-deny {
+            background: var(--danger-color);
+            color: #fff;
+            flex: 1;
+        }
+
+        /* SUBMODAL RAZÓN */
+        .submodal-razon {
+            display: none;
+            margin-top: 15px;
+            background: rgba(231, 29, 54, 0.08);
+            border: 1px solid rgba(231, 29, 54, 0.3);
+            padding: 15px;
+            border-radius: 12px;
+        }
+
+        textarea {
+            width: 100%;
+            background: #0d0b12;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 80px;
+            margin-top: 8px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-pink);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="brand-title">
+                <i class="fa-solid fa-torii-gate" style="color: var(--accent-pink); font-size: 1.8rem;"></i>
+                <div>
+                    <h1>夜桜高校 YOZAKURA HIGH</h1>
+                    <span>Panel de Control de Staff</span>
+                </div>
+            </div>
+            <div class="staff-badge" id="staffInfoBadge">
+                <i class="fa-solid fa-spinner fa-spin"></i> Cargando credenciales...
+            </div>
+        </header>
+
+        <main>
+            <h2 style="font-size: 1.2rem; margin-bottom: 20px; color: var(--text-muted);" id="tituloSeccion">
+                <i class="fa-solid fa-inbox" style="color: var(--accent-pink);"></i> Fichas Pendientes de Revisión
+            </h2>
+            <div class="grid-fichas" id="fichasContainer">
+                <div class="no-fichas">Cargando lista de fichas...</div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL DE DETALLES -->
+    <div class="modal-overlay" id="modalDetalle">
+        <div class="modal-card">
+            <div class="modal-header-banner">
+                <button class="btn-close" onclick="cerrarModalDetalle()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-profile-header">
+                    <img id="modalAvatar" class="modal-avatar" src="" alt="Avatar">
+                    <div>
+                        <h2 id="modalNombre" style="color: var(--accent-pink);">---</h2>
+                        <span id="modalCurso" style="color: var(--text-muted); font-size: 0.9rem;">---</span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="field-group">
+                        <label>Discord ID / Tag</label>
+                        <p id="modalDiscord">---</p>
+                    </div>
+                    <div class="field-group">
+                        <label>Usuario Roblox</label>
+                        <p id="modalRoblox">---</p>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label>Edad y Género del Personaje</label>
+                    <p id="modalEdadGenero">---</p>
+                </div>
+
+                <div class="field-group">
+                    <label>Personalidad</label>
+                    <p id="modalPersonalidad">---</p>
+                </div>
+
+                <div class="field-group">
+                    <label>Gustos y Disgustos</label>
+                    <p id="modalGustos">---</p>
+                </div>
+
+                <div class="field-group">
+                    <label>Historia del Personaje</label>
+                    <p id="modalHistoria">---</p>
+                </div>
+
+                <div id="footerAcciones" class="modal-footer">
+                    <button class="btn btn-accept" id="btnAceptarAccion"><i class="fa-solid fa-check"></i> Aceptar Ficha</button>
+                    <button class="btn btn-deny" onclick="mostrarInputRazon()"><i class="fa-solid fa-xmark"></i> Negar Ficha</button>
+                </div>
+
+                <div class="submodal-razon" id="subModalRazon">
+                    <label style="color: var(--danger-color); font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> Razón obligatoria para rechazar:</label>
+                    <textarea id="razonRechazoText" placeholder="Ejemplo: La historia del personaje rompe la normativa de realismo OOC..."></textarea>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button class="btn btn-deny" style="flex:1;" id="btnConfirmarNegar"><i class="fa-solid fa-paper-plane"></i> Confirmar Rechazo</button>
+                        <button class="btn" style="background:#333; color:#fff;" onclick="ocultarInputRazon()">Cancelar</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- CÓDIGO JAVASCRIPT -->
+    <script>
+        const SUPABASE_URL = 'https://nvyltyrykclvljhwqkvm.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52eWx0eXJ5a2NsdmxqaHdxa3ZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4NzkzMTYsImV4cCI6MjEwMjQ1NTMxNn0.-OxRI1ZsNCJny6QalyUrv9NfdJT8DektXn0sNCEuQTg';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const staffDiscordId = urlParams.get('discord_id');
+        const staffUsername = urlParams.get('username') || 'Miembro del Staff';
+        const queryFichaId = urlParams.get('id');
+
+        const staffBadge = document.getElementById('staffInfoBadge');
+        let fichaActual = null;
+        let listaFichasCache = [];
+
+        // Validar credenciales de URL al cargar la página
+        if (!staffDiscordId) {
+            bloquearAcceso('⚠️ Acceso Denegado', 'Debes abrir este panel únicamente usando el botón interactivo dentro de Discord.');
+        } else {
+            verificarPermisosStaff(staffDiscordId);
+        }
+
+        async function verificarPermisosStaff(discordId) {
+            staffBadge.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Verificando credenciales...`;
+
+            try {
+                const { data: roles, error } = await supabaseClient
+                    .from('roles_revisores')
+                    .select('*');
+
+                if (error) throw error;
+
+                staffBadge.innerHTML = `<i class="fa-solid fa-user-shield"></i> Staff Conectado: <strong>${staffUsername}</strong>`;
+                
+                // ⚡ SOLUCIÓN: Si la URL trae un parámetro ?id=X, abrimos directamente esa ficha para verla completa (sea cual sea su estado)
+                if (queryFichaId) {
+                    document.getElementById('tituloSeccion').innerHTML = `<i class="fa-solid fa-file-lines" style="color: var(--accent-pink);"></i> Visualización de Ficha Histórica (#${queryFichaId})`;
+                    await cargarFichaEspecifica(queryFichaId);
+                } else {
+                    cargarFichasPendientes();
+                }
+
+            } catch (err) {
+                console.error(err);
+                bloquearAcceso('❌ Error de Permisos', 'No se pudieron validar tus permisos con la base de datos.');
+            }
+        }
+
+        function bloquearAcceso(titulo, mensaje) {
+            document.body.innerHTML = `
+                <div style="color:white; text-align:center; margin-top:40vh; transform:translateY(-50%);">
+                    <h1 style="color: var(--accent-pink); font-family: 'Cinzel', serif; margin-bottom: 12px; font-size: 2rem;">${titulo}</h1>
+                    <p style="color: var(--text-muted); font-size: 1.1rem;">${mensaje}</p>
+                </div>`;
+        }
+
+        async function cargarFichasPendientes() {
+            const container = document.getElementById('fichasContainer');
+            
+            const { data: fichas, error } = await supabaseClient
+                .from('fichas')
+                .select('*')
+                .in('estado', ['pendiente', 'revision', 'en_revision']);
+
+            if (error) {
+                container.innerHTML = `<div class="no-fichas">❌ Error al conectar con Supabase: ${error.message}</div>`;
+                return;
+            }
+
+            listaFichasCache = fichas;
+
+            if (!fichas || fichas.length === 0) {
+                container.innerHTML = `<div class="no-fichas">🎉 ¡No hay fichas pendientes por revisar en este momento!</div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            fichas.forEach(ficha => {
+                const card = document.createElement('div');
+                card.className = 'ficha-mini-card';
+                card.innerHTML = `
+                    <div class="ficha-mini-header">
+                        <img src="${ficha.apariencia_pj || 'https://i.imgur.com/83pZ70l.png'}" class="ficha-mini-avatar" alt="Avatar">
+                        <div class="ficha-mini-info">
+                            <h3>${ficha.nombre_pj}</h3>
+                            <span>${ficha.curso_pj}</span>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.82rem; color: var(--text-muted);">
+                        <p><strong>Roblox:</strong> ${ficha.roblox_username}</p>
+                    </div>
+                    <button class="btn btn-review" onclick="abrirRevision(${ficha.id})">
+                        <i class="fa-solid fa-magnifying-glass"></i> Revisar Ficha
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function cargarFichaEspecifica(id) {
+            const container = document.getElementById('fichasContainer');
+
+            // ⚡ CORRECCIÓN CLAVE: Buscar por ID directo sin restricciones de estado para que nunca falle
+            const { data: ficha, error } = await supabaseClient
+                .from('fichas')
+                .select('*')
+                .eq('id', id)
+                .maybeSingle();
+
+            if (error || !ficha) {
+                container.innerHTML = `<div class="no-fichas">❌ La ficha #${id} no fue encontrada en la base de datos o ya no existe.</div>`;
+                return;
+            }
+
+            listaFichasCache = [ficha];
+
+            // Renderizamos una tarjeta informativa en el fondo y abrimos automáticamente el modal de lectura
+            container.innerHTML = `
+                <div class="ficha-mini-card" style="border-color: var(--success-color);">
+                    <div class="ficha-mini-header">
+                        <img src="${ficha.apariencia_pj || 'https://i.imgur.com/83pZ70l.png'}" class="ficha-mini-avatar" alt="Avatar">
+                        <div class="ficha-mini-info">
+                            <h3>${ficha.nombre_pj}</h3>
+                            <span>Estado: <strong style="text-transform: uppercase; color: var(--accent-pink);">${ficha.estado}</strong></span>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.82rem; color: var(--text-muted);">
+                        <p><strong>Roblox:</strong> ${ficha.roblox_username}</p>
+                        <p><strong>Firma / Staff:</strong> ${ficha.firma_by || 'N/A'}</p>
+                    </div>
+                    <button class="btn btn-review" onclick="abrirRevision(${ficha.id})">
+                        <i class="fa-solid fa-file-lines"></i> Ver Detalles Completos
+                    </button>
+                </div>
+            `;
+
+            abrirRevision(Number(id));
+        }
+
+        function abrirRevision(id) {
+            fichaActual = listaFichasCache.find(f => f.id === id);
+            if (!fichaActual) return;
+
+            document.getElementById('modalAvatar').src = fichaActual.apariencia_pj || 'https://i.imgur.com/83pZ70l.png';
+            document.getElementById('modalNombre').textContent = fichaActual.nombre_pj;
+            document.getElementById('modalCurso').textContent = fichaActual.curso_pj;
+            document.getElementById('modalDiscord').textContent = fichaActual.discord_id;
+            document.getElementById('modalRoblox').textContent = fichaActual.roblox_username;
+            document.getElementById('modalEdadGenero').textContent = `${fichaActual.edad_pj} años | ${fichaActual.genero_pj}`;
+            document.getElementById('modalPersonalidad').textContent = fichaActual.personalidad_pj;
+            document.getElementById('modalGustos').textContent = fichaActual.gustos_pj;
+            document.getElementById('modalHistoria').textContent = fichaActual.historia_pj;
+
+            // Si la ficha ya está resuelta (aceptada, negada o rechazada), ocultamos los botones de acción para mostrarla en modo lectura
+            const footerAcciones = document.getElementById('footerAcciones');
+            if (['aceptada', 'negada', 'rechazada', 'aprobada'].includes(fichaActual.estado)) {
+                footerAcciones.style.display = 'none';
+            } else {
+                footerAcciones.style.display = 'flex';
+            }
+
+            ocultarInputRazon();
+            document.getElementById('modalDetalle').style.display = 'flex';
+
+            document.getElementById('btnAceptarAccion').onclick = () => aceptarFicha(fichaActual.id);
+            document.getElementById('btnConfirmarNegar').onclick = () => negarFicha(fichaActual.id);
+        }
+
+        function cerrarModalDetalle() {
+            document.getElementById('modalDetalle').style.display = 'none';
+            fichaActual = null;
+            if (queryFichaId) {
+                // Si estaba viendo una ficha específica, al cerrar el modal recargamos el panel normal de pendientes
+                window.location.href = window.location.pathname + `?discord_id=${staffDiscordId}&username=${staffUsername}`;
+            }
+        }
+
+        function mostrarInputRazon() {
+            document.getElementById('footerAcciones').style.display = 'none';
+            document.getElementById('subModalRazon').style.display = 'block';
+            document.getElementById('razonRechazoText').value = '';
+        }
+
+        function ocultarInputRazon() {
+            document.getElementById('subModalRazon').style.display = 'none';
+            document.getElementById('footerAcciones').style.display = 'flex';
+        }
+
+        async function aceptarFicha(fichaId) {
+            if (!confirm('¿Estás seguro de aceptar esta ficha? Se firmará digitalmente con tu nombre.')) return;
+
+            const firmaDigital = `${staffUsername}`;
+
+            const { error } = await supabaseClient
+                .from('fichas')
+                .update({ 
+                    estado: 'aceptada', 
+                    firma_by: firmaDigital,
+                    staff_name: staffUsername,
+                    staff_id: staffDiscordId,
+                    revisando_por_tag: staffUsername,
+                    revisando_por_id: staffDiscordId
+                })
+                .eq('id', fichaId);
+
+            if (error) {
+                alert('❌ Error al aceptar ficha: ' + error.message);
+            } else {
+                alert('✅ ¡Ficha aceptada y firmada con éxito!');
+                cerrarModalDetalle();
+                cargarFichasPendientes();
+            }
+        }
+
+        async function negarFicha(fichaId) {
+            const razon = document.getElementById('razonRechazoText').value.trim();
+            if (!razon) {
+                alert('⚠️ Debes ingresar una razón obligatoria para el rechazo.');
+                return;
+            }
+
+            const firmaDigital = `${staffUsername}`;
+
+            const { error } = await supabaseClient
+                .from('fichas')
+                .update({ 
+                    estado: 'negada', 
+                    firma_by: firmaDigital,
+                    staff_name: staffUsername,
+                    staff_id: staffDiscordId,
+                    revisando_por_tag: staffUsername,
+                    revisando_por_id: staffDiscordId,
+                    razon_negacion: razon 
+                })
+                .eq('id', fichaId);
+
+            if (error) {
+                alert('❌ Error al rechazar ficha: ' + error.message);
+            } else {
+                alert('❌ Ficha rechazada y guardada correctamente.');
+                cerrarModalDetalle();
+                cargarFichasPendientes();
+            }
+        }
+    </script>
+</body>
+</html>
