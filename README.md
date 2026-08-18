@@ -1,4 +1,4 @@
-# 🌸 Yozakura High — Bot de Discord & Sistema de Admisión
+# 🌸 Instituto Yozakura — Bot de Discord & Sistema de Admisión
 
 Bot de Discord desarrollado para la comunidad de Roleplay de **Yozakura High**. Este proyecto integra un bot modular en **Node.js (Discord.js)** con una base de datos en **Supabase (PostgreSQL)** y paneles web externos alojados en **Netlify** para la gestión de usuarios y el equipo de staff.
 
